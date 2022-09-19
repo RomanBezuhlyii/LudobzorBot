@@ -32,7 +32,7 @@ async def add_user_to_db(chat_id: str, first_name: str, second_name: str, userna
                 is_admin=is_admin)
     s.add(user)
     s.commit()
-    s.close()
+    #s.close()
 
 async def check_is_admin(chat_id: str) -> bool:
     user = s.query(User).filter(User.chat_id==chat_id).first()
@@ -77,9 +77,11 @@ async def managing_admin(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
     if current_user_admin == True:
         admin_str = ""
+        counter = 0
         admins = s.query(User).filter(User.is_admin == True).all()
         for admin in admins:
-            admin_str += f"Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
+            counter += 1
+            admin_str += f"{counter}. Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text=admin_str,
                                     message_id=c.message.message_id,
@@ -96,12 +98,14 @@ async def delete_admin_list(c: types.CallbackQuery):
         admins = s.query(User).filter(User.is_admin == True).all()
         admins_delete_kb = InlineKeyboardMarkup()
         admin_str = ""
+        counter = 0
         for admin in admins:
             if admin.chat_id != str(c.from_user.id):
                 print(type(c.from_user.id))
                 print(f"Айди из БД: {admin.chat_id}, Мое Айди: {c.from_user.id} не равно")
                 admins_delete_kb.add(InlineKeyboardButton(f'{admin.chat_id}', callback_data=f'delete_{admin.chat_id}'))
-                admin_str += f"Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
+                counter += 1
+                admin_str += f"{counter}. Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
         admins_delete_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text=admin_str,
@@ -119,7 +123,10 @@ async def delete_admin(c: types.CallbackQuery):
         split_str = c.data.split('_')
         s.query(User).filter(User.chat_id==split_str[1]).delete()
         s.commit()
-        s.close()
+        #s.close()
+        await bot.send_message(chat_id=int(split_str[1]),
+                               text='Вы лишены прав администратора!\n Введите команду '
+                                    '/start чтобы заново зайти в меню бота')
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text='Администратор успешно удален!',
                                     message_id=c.message.message_id,
@@ -173,7 +180,10 @@ async def load_username_admin(m: types.Message, state: FSMContext):
         else:
             user.is_admin = True
             s.commit()
-            s.close()
+            #s.close()
+            await bot.send_message(chat_id=int(user.chat_id),
+                                   text='Теперь у вас есть права администратора! /nВведите команду '
+                                        '/start, чтобы открыть панель администратора')
             await m.answer(text="Администратор успешно добавлен!",
                            reply_markup=kb.back_to_admin_menu_kb)
 
@@ -183,7 +193,7 @@ async def add_admin_from_phone(c: types.CallbackQuery):
     if current_user_admin == True:
         await cl.FSMAdminInfo.phone_number.set()
         await bot.edit_message_text(chat_id=c.from_user.id,
-                                    text="Введите номер телефона пользователя в формате '+380XXXXXXXXX':",
+                                    text="Введите номер телефона пользователя в формате '380XXXXXXXXX':",
                                     message_id=c.message.message_id)
     else:
         await bot.send_message(chat_id=c.from_user.id,
@@ -206,7 +216,10 @@ async def load_phone_admin(m: types.Message, state: FSMContext):
         else:
             user.is_admin = True
             s.commit()
-            s.close()
+            #s.close()
+            await bot.send_message(chat_id=int(user.chat_id),
+                                   text='Теперь у вас есть права администратора! /nВведите команду '
+                                        '/start, чтобы открыть панель администратора')
             await m.answer(text="Администратор успешно добавлен!",
                            reply_markup=kb.back_to_admin_menu_kb)
 
@@ -272,7 +285,7 @@ async def welcome_bonus(c: types.CallbackQuery):
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text="Вам, как пользователю нашего сайта, полагается бонус "
                                 "в размере XXX YYY! Просто введите промокод LUDOBZOR при "
-                                "регистрации в следующих казино:\n "+
+                                "регистрации в следующих казино:\n"+
                                 link('Casino A',
                                      url='https://ludobzor.com/bonusy/') + '\n' +
                                 link('Casino B',
