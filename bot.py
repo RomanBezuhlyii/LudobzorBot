@@ -203,7 +203,7 @@ async def load_phone_admin(m: types.Message, state: FSMContext):
             await m.answer(text="Человека с таким номером телефона нету в базе данных.\n"
                                 "1. Проверьте правильность ввода номера телефона\n"
                                 "2. Убедитесь, что пользователь передал контактную информацию боту",
-                           reply_markup=kb.enter_again_admin_username_kb)
+                           reply_markup=kb.enter_again_admin_phone_kb)
         else:
             user.is_admin = True
             s.commit()
@@ -211,7 +211,6 @@ async def load_phone_admin(m: types.Message, state: FSMContext):
             await m.answer("Администратор успешно добавлен!")
             await m.answer(text='Добро пожаловать в администратувную панель!',
                            reply_markup=kb.admin_menu_kb)
-
 
 @dp.callback_query_handler(lambda call: call.data == 'back_to_menu')
 async def telegram_contacts(c: types.CallbackQuery):
@@ -346,6 +345,13 @@ async def email_contacts(c: types.CallbackQuery, state: FSMContext):
 async def load_email(m: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['email'] = m.text
+        await add_user_to_db(chat_id=m.from_user.id,
+                             username=m.from_user.username,
+                             first_name=m.from_user.first_name,
+                             second_name=m.from_user.last_name,
+                             phone_number='No',
+                             email=data['email'],
+                             is_admin=False)
         await bot.send_message(chat_id=m.from_user.id,
                                text=f"Email:{data['email']}")
         await state.finish()
