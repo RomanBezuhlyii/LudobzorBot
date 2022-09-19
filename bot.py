@@ -122,10 +122,8 @@ async def delete_admin(c: types.CallbackQuery):
         s.close()
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text='Администратор успешно удален!',
-                                    message_id=c.message.message_id)
-        await bot.send_message(chat_id=c.from_user.id,
-                                text='Добро пожаловать в администратувную панель!',
-                                reply_markup=kb.admin_menu_kb)
+                                    message_id=c.message.message_id,
+                                    reply_markup=kb.back_to_admin_menu_kb)
     else:
         await bot.send_message(chat_id=c.from_user.id,
                                text="Обратитесь к администратору, чтобы получить доступ!",
@@ -151,8 +149,9 @@ async def add_admin_from_username(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
     if current_user_admin == True:
         await cl.FSMAdminInfo.username.set()
-        await bot.send_message(chat_id=c.from_user.id,
-                               text="Введите никнейм пользователя в Телеграмм без '@'")
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите никнейм пользователя в Телеграмм без '@'",
+                                    message_id=c.message.message_id)
     else:
         await bot.send_message(chat_id=c.from_user.id,
                                text="Обратитесь к администратору, чтобы получить доступ!",
@@ -175,17 +174,17 @@ async def load_username_admin(m: types.Message, state: FSMContext):
             user.is_admin = True
             s.commit()
             s.close()
-            await m.answer("Администратор успешно добавлен!")
-            await m.answer(text='Добро пожаловать в администратувную панель!',
-                           reply_markup=kb.admin_menu_kb)
+            await m.answer(text="Администратор успешно добавлен!",
+                           reply_markup=kb.back_to_admin_menu_kb)
 
 @dp.callback_query_handler(lambda call: call.data == 'add_from_phone')
 async def add_admin_from_phone(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
     if current_user_admin == True:
         await cl.FSMAdminInfo.phone_number.set()
-        await bot.send_message(chat_id=c.from_user.id,
-                               text="Введите номер телефона пользователя в формате '+380XXXXXXXXX':")
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите номер телефона пользователя в формате '+380XXXXXXXXX':",
+                                    message_id=c.message.message_id)
     else:
         await bot.send_message(chat_id=c.from_user.id,
                                text="Обратитесь к администратору, чтобы получить доступ!",
@@ -208,16 +207,65 @@ async def load_phone_admin(m: types.Message, state: FSMContext):
             user.is_admin = True
             s.commit()
             s.close()
-            await m.answer("Администратор успешно добавлен!")
-            await m.answer(text='Добро пожаловать в администратувную панель!',
-                           reply_markup=kb.admin_menu_kb)
+            await m.answer(text="Администратор успешно добавлен!",
+                           reply_markup=kb.back_to_admin_menu_kb)
+
+@dp.callback_query_handler(lambda call: call.data == 'spam')
+async def spam(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text='Выберите канал расспостранения рассылки:',
+                                    message_id=c.message.message_id,
+                                    reply_markup=kb.admin_spam_kb)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.callback_query_handler(lambda call: call.data == 'spam_to_tg')
+async def spam_to_tg(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMSpam.spam_message.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите текст рассылки: ",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMSpam.spam_message)
+async def load_spam_admin(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['spam'] = m.text
+        await bot.send_message(chat_id=m.from_user.id,
+                               text='Отправлять данное сообщение как рассылку?')
+        await bot.send_message(chat_id=m.from_user.id,
+                               text=f"{data['spam']}",
+                               reply_markup=kb.admin_spam_confirm_kb)
+        await state.finish()
+
+@dp.callback_query_handler(lambda call: call.data == 'confirm_spam')
+async def confirm_spam(c: types.CallbackQuery):
+    users = s.query(User).filter().all()
+    for user in users:
+        if user.is_admin == False:
+            await bot.send_message(chat_id=user.chat_id,
+                                   text=c.message.text)
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Рассылка была отправлена успешно!',
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_admin_menu_kb)
 
 @dp.callback_query_handler(lambda call: call.data == 'back_to_menu')
 async def telegram_contacts(c: types.CallbackQuery):
-    await bot.send_message(chat_id=c.from_user.id,
-                           text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
-                        "тебе лучшие казино для игры и выигрыша",
-                        reply_markup=kb.main_menu_kb)
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
+                                "тебе лучшие казино для игры и выигрыша",
+                                message_id=c.message.message_id,
+                                reply_markup=kb.main_menu_kb)
 
 @dp.callback_query_handler(lambda call: call.data == 'welcome_bonus')
 async def welcome_bonus(c: types.CallbackQuery):
@@ -271,8 +319,6 @@ async def telegram_contacts(c: types.CallbackQuery, state: FSMContext):
                                 "Telegram. Для этого нажмите 'Отправить свой контакт' или "
                                 "введите телефон формата: 38ХХХХХХХХХХ",
                            reply_markup=kb.phone_numb_kb)
-
-
 
 @dp.message_handler(state=cl.FSMContactsPhone.phone, content_types=['contact','text'])
 async def load_tg_phone(m: types.Message, state: FSMContext):

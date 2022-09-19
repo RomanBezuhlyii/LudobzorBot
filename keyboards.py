@@ -24,6 +24,9 @@ main_menu_kb.add(InlineKeyboardButton('Задать вопрос операто�
 back_to_menu_kb = InlineKeyboardMarkup()
 back_to_menu_kb.add(InlineKeyboardButton("Вернуться назад", callback_data='back_to_menu'))
 
+back_to_admin_menu_kb = InlineKeyboardMarkup()
+back_to_admin_menu_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
 admin_menu_kb = InlineKeyboardMarkup()
 admin_menu_kb.add(InlineKeyboardButton('Рассылка', callback_data='spam'))
 admin_menu_kb.add(InlineKeyboardButton('Управление администраторами', callback_data='managing_admin'))
@@ -37,6 +40,17 @@ add_admin_choice_kb = InlineKeyboardMarkup()
 add_admin_choice_kb.add(InlineKeyboardButton('Добавить по никнейму', callback_data='add_from_username'))
 add_admin_choice_kb.add(InlineKeyboardButton('Добавить по номеру телефона', callback_data='add_from_phone'))
 add_admin_choice_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+admin_spam_kb = InlineKeyboardMarkup()
+admin_spam_kb.add(InlineKeyboardButton('Рассылка в Телеграмм', callback_data='spam_to_tg'))
+admin_spam_kb.add(InlineKeyboardButton('Рассылка по электронной почте', callback_data='spam_to_email'))
+admin_spam_kb.add(InlineKeyboardButton('Рассылка по всем каналам', callback_data='spam_to_everything'))
+admin_spam_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+admin_spam_confirm_kb = InlineKeyboardMarkup()
+admin_spam_confirm_kb.add(InlineKeyboardButton('Отправить', callback_data='confirm_spam'))
+admin_spam_confirm_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
 
 enter_again_admin_username_kb = InlineKeyboardMarkup()
 enter_again_admin_username_kb.add(InlineKeyboardButton('Повторить поиск по никнейму', callback_data='add_from_username'))

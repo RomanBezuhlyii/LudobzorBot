@@ -11,3 +11,6 @@ class FSMContactsEmail(StatesGroup):
 class FSMAdminInfo(StatesGroup):
     phone_number = State()
     username = State()
+
+class FSMSpam(StatesGroup):
+    spam_message = State()
