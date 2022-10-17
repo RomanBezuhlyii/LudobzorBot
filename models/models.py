@@ -2,6 +2,25 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
 from models.database import Base
 
+class Casino(Base):
+    __tablename__ = 'casino'
+
+    id = Column(Integer, primary_key=True)
+    type = Column(String)
+    casino_name = Column(String)
+    casino_description = Column(String)
+    link = Column(String)
+
+    def __init__(self, type: str, casino_name: str, casino_description: str, link: str):
+        self.type = type
+        self.casino_name = casino_name
+        self.casino_description = casino_description
+        self.link = link
+
+    def __repr__(self):
+        info: str = f'Казино: {self.casino_name}, Ссылка: {self.link}'
+        return info
+
 class User(Base):
     __tablename__ = 'users'
 

@@ -10,18 +10,28 @@ import config as cnfg
 import keyboards as kb
 import classes as cl
 from models.database import create_database, Session
-from models.models import User
+from models.models import User, Casino
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
 
 
 storage = MemoryStorage()
 bot = Bot(token=cnfg.TOKEN)
 dp = Dispatcher(bot, storage=storage)
 s = Session()
+msg = MIMEMultipart()
+msg['Subject'] = 'Информационная рассылка от Ludobzor'
+msg['From'] = 'speedsolver99@gmail.com'
+password = 'wqtgnrosvovwexyh'
+
 
 """@dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.reply("Ок", reply_markup=types.ReplyKeyboardRemove())"""
 
+#region functions with db
+###Add user to database
 async def add_user_to_db(chat_id: str, first_name: str, second_name: str, username: str, phone_number: str, email: str, is_admin: bool):
     user = User(chat_id=chat_id,
                 username=username,
@@ -34,31 +44,26 @@ async def add_user_to_db(chat_id: str, first_name: str, second_name: str, userna
     s.commit()
     #s.close()
 
+###Add information about casino to database
+async def add_casino_to_db(type: str, name: str, description: str, link: str):
+    casino = Casino(type=type,
+                    casino_name=name,
+                    casino_description=description,
+                    link=link)
+    s.add(casino)
+    s.commit()
+
+###Check admin permission on current user
 async def check_is_admin(chat_id: str) -> bool:
     user = s.query(User).filter(User.chat_id==chat_id).first()
     if user == None:
         return False
     return user.is_admin
 
+#endregion
 
-@dp.message_handler(commands=['start'])
-async def process_start_command(message: types.Message):
-    current_user_admin = await check_is_admin(message.from_user.id)
-    if current_user_admin == True:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text='Добро пожаловать в администратувную панель!',
-                               reply_markup=kb.admin_menu_kb)
-    else:
-        r = s.query(User).filter(User.chat_id==message.from_user.id).all()
-        if len(r) == 0:
-            await message.reply("Для пользования ботом нужно добавить свои "
-                                "контактные данные", reply_markup=kb.start_inline_kb)
-        else:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
-                                        "тебе лучшие казино для игры и выигрыша",
-                                   reply_markup=kb.main_menu_kb)
-
+#Admin panel
+###Back to general admin page
 @dp.callback_query_handler(lambda call: call.data == 'back_to_admin_menu')
 async def admin_menu(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -72,6 +77,8 @@ async def admin_menu(c: types.CallbackQuery):
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
 
+#region managing admins
+###Search and dispaly list of admins, without current user
 @dp.callback_query_handler(lambda call: call.data == 'managing_admin')
 async def managing_admin(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -91,6 +98,7 @@ async def managing_admin(c: types.CallbackQuery):
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
 
+###Search and display all admins with chat id
 @dp.callback_query_handler(lambda call: call.data == 'delete_admin')
 async def delete_admin_list(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -116,6 +124,8 @@ async def delete_admin_list(c: types.CallbackQuery):
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
 
+
+###Delete admin which choose current user(admin)
 @dp.callback_query_handler(lambda call: call.data.startswith('delete_'))
 async def delete_admin(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -136,6 +146,7 @@ async def delete_admin(c: types.CallbackQuery):
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
 
+###Pae with add user variants
 @dp.callback_query_handler(lambda call: call.data == 'add_admin')
 async def add_admin_choice(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -151,6 +162,7 @@ async def add_admin_choice(c: types.CallbackQuery):
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
 
+###Add user with username
 @dp.callback_query_handler(lambda call: call.data == 'add_from_username')
 async def add_admin_from_username(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -187,6 +199,7 @@ async def load_username_admin(m: types.Message, state: FSMContext):
             await m.answer(text="Администратор успешно добавлен!",
                            reply_markup=kb.back_to_admin_menu_kb)
 
+###Add user with phone number
 @dp.callback_query_handler(lambda call: call.data == 'add_from_phone')
 async def add_admin_from_phone(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -222,7 +235,243 @@ async def load_phone_admin(m: types.Message, state: FSMContext):
                                         '/start, чтобы открыть панель администратора')
             await m.answer(text="Администратор успешно добавлен!",
                            reply_markup=kb.back_to_admin_menu_kb)
+#endregion
 
+#Managing casino
+###General page in Managin Casino submenu
+@dp.callback_query_handler(lambda call: call.data == 'managing_casino')
+async def managing_casino(c: types.CallbackQuery):
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Сделайте выбор',
+                                message_id=c.message.message_id,
+                                reply_markup=kb.managing_casino_kb)
+
+#region delete casino
+###Search and display list of casino with label such as: top, bonus, welcome
+@dp.callback_query_handler(lambda call: call.data.startswith('casinodel_'))
+async def delete_top_casino_list(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        split_str = c.data.split('_')
+        top_casino = s.query(Casino).filter(Casino.type == split_str[1]).all()
+        print(top_casino)
+        if(len(top_casino) == 0):
+            await bot.edit_message_text(chat_id=c.from_user.id,
+                                        text='В списке отсутствуют казино',
+                                        message_id=c.message.message_id,
+                                        reply_markup=kb.back_to_admin_menu_kb)
+        else:
+            top_casino_delete_kb = InlineKeyboardMarkup()
+            casino_str = ""
+            for casino in top_casino:
+                top_casino_delete_kb.add(InlineKeyboardButton(f'{casino.id}. {casino.casino_name}', callback_data=f'cas_{split_str[1]}_{casino.id}'))
+                casino_str += f"ID: {casino.id}. Название: {casino.casino_name}, Описание: {casino.casino_description}, Ссылка: {casino.link}\n"
+            top_casino_delete_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+            await bot.edit_message_text(chat_id=c.from_user.id,
+                                        text=casino_str,
+                                        message_id=c.message.message_id,
+                                        reply_markup=top_casino_delete_kb)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+###Delete casino with id, which choose user
+@dp.callback_query_handler(lambda call: call.data.startswith('cas_'))
+async def delete_casino(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        split_str = c.data.split('_')
+        print(split_str[2])
+        del_numb = int(split_str[2])
+        s.query(Casino).filter(Casino.id==int(split_str[2])).delete()
+        s.commit()
+        #s.close()
+        if split_str[1]=='top':
+            await bot.edit_message_text(chat_id=c.from_user.id,
+                                        text='Казино успешно удалено!',
+                                        message_id=c.message.message_id,
+                                        reply_markup=kb.top_del_else_kb)
+        elif split_str[1]=='bonus':
+            await bot.edit_message_text(chat_id=c.from_user.id,
+                                        text='Казино успешно удалено!',
+                                        message_id=c.message.message_id,
+                                        reply_markup=kb.bonus_del_else_kb)
+        elif split_str[1]=='welcome':
+            await bot.edit_message_text(chat_id=c.from_user.id,
+                                        text='Казино успешно удалено!',
+                                        message_id=c.message.message_id,
+                                        reply_markup=kb.welcome_del_else_kb)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+#endregion
+
+#region work with top casino
+###Variants of work with top casino list
+@dp.callback_query_handler(lambda call: call.data == 'top_casino_a')
+async def top_casino(c: types.CallbackQuery):
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Что хотите сделать?',
+                                message_id=c.message.message_id,
+                                reply_markup=kb.top_casino_kb)
+
+###Add top casino to list
+@dp.callback_query_handler(lambda call: call.data == 'add_top')
+async def add_top_casino(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMCasinoTOP.name.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите название казино",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMCasinoTOP.name)
+async def load_casino_name(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['name'] = m.text
+    await cl.FSMCasinoTOP.next()
+    await m.reply(text='Введите описание бонусов')
+
+@dp.message_handler(state=cl.FSMCasinoTOP.description)
+async def load_casino_description(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['description'] = m.text
+    await cl.FSMCasinoTOP.next()
+    await m.reply(text='Введите ссылку на казино')
+
+@dp.message_handler(state=cl.FSMCasinoTOP.link)
+async def load_casino_link(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['link'] = m.text
+    await add_casino_to_db(type='top',
+                           name=data['name'],
+                           description=data['description'],
+                           link=data['link'])
+    await m.reply(text='Казино добавлено успешно!',
+                  reply_markup=kb.top_add_else_kb)
+    await state.finish()
+#endregion
+
+#region work with top bonus casino
+###Variants of work with top bonus in casino list
+@dp.callback_query_handler(lambda call: call.data == 'top_bonus_a')
+async def top_bonus(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text='Что хотите сделать?',
+                                    message_id=c.message.message_id,
+                                    reply_markup=kb.top_bonus_kb)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+###Add casino with top bonus
+@dp.callback_query_handler(lambda call: call.data == 'add_bonus')
+async def add_bonus_casino(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMCasinoBONUS.name.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите название казино",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMCasinoBONUS.name)
+async def load_bonus_casino_name(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['name'] = m.text
+    await cl.FSMCasinoBONUS.next()
+    await m.reply(text='Введите описание бонусов')
+
+@dp.message_handler(state=cl.FSMCasinoBONUS.description)
+async def load_bonus_casino_description(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['description'] = m.text
+    await cl.FSMCasinoBONUS.next()
+    await m.reply(text='Введите ссылку на казино')
+
+@dp.message_handler(state=cl.FSMCasinoBONUS.link)
+async def load_bonus_casino_link(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['link'] = m.text
+    await add_casino_to_db(type='bonus',
+                           name=data['name'],
+                           description=data['description'],
+                           link=data['link'])
+    await m.reply(text='Казино добавлено успешно!',
+                  reply_markup=kb.bonus_add_else_kb)
+    await state.finish()
+#endregion
+
+#region work with welcome bonus
+###Variants of work with welcome bonus list
+@dp.callback_query_handler(lambda call: call.data == 'welcome_bonus_a')
+async def welcome_bonus(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text='Что хотите сделать?',
+                                    message_id=c.message.message_id,
+                                    reply_markup=kb.welcome_kb)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+###Add casino with welcome bonus
+@dp.callback_query_handler(lambda call: call.data == 'add_welcome')
+async def add_welcome_casino(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMCasinoWELCOME.name.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите название казино",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMCasinoWELCOME.name)
+async def load_welcome_casino_name(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['name'] = m.text
+    await cl.FSMCasinoWELCOME.next()
+    await m.reply(text='Введите описание бонусов')
+
+@dp.message_handler(state=cl.FSMCasinoWELCOME.description)
+async def load_welcome_casino_description(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['description'] = m.text
+    await cl.FSMCasinoWELCOME.next()
+    await m.reply(text='Введите ссылку на казино')
+
+@dp.message_handler(state=cl.FSMCasinoWELCOME.link)
+async def load_welcome_casino_link(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['link'] = m.text
+    await add_casino_to_db(type='welcome',
+                           name=data['name'],
+                           description=data['description'],
+                           link=data['link'])
+    await m.reply(text='Казино добавлено успешно!',
+                  reply_markup=kb.welcome_add_else_kb)
+    await state.finish()
+#endregion
+
+#Work with spam
+###Spam general page
 @dp.callback_query_handler(lambda call: call.data == 'spam')
 async def spam(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -236,6 +485,8 @@ async def spam(c: types.CallbackQuery):
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
 
+#region spam in telegram
+###Start page to spam in telegram
 @dp.callback_query_handler(lambda call: call.data == 'spam_to_tg')
 async def spam_to_tg(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
@@ -260,9 +511,10 @@ async def load_spam_admin(m: types.Message, state: FSMContext):
                                reply_markup=kb.admin_spam_confirm_kb)
         await state.finish()
 
-@dp.callback_query_handler(lambda call: call.data == 'confirm_spam')
+###Confirm message text
+@dp.callback_query_handler(lambda call: call.data == 'confirm_spam_tg')
 async def confirm_spam(c: types.CallbackQuery):
-    users = s.query(User).filter().all()
+    users = s.query(User).filter(User.phone_number!='No').all()
     for user in users:
         if user.is_admin == False:
             await bot.send_message(chat_id=user.chat_id,
@@ -271,7 +523,124 @@ async def confirm_spam(c: types.CallbackQuery):
                                 text='Рассылка была отправлена успешно!',
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_admin_menu_kb)
+#endregion
 
+#region spam in email
+###Start spam in email
+@dp.callback_query_handler(lambda call: call.data == 'spam_to_email')
+async def spam_to_tg(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMSpamEmail.text.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите текст рассылки: ",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMSpamEmail.text)
+async def load_spam_admin(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['spam'] = m.text
+        await bot.send_message(chat_id=m.from_user.id,
+                               text='Отправлять данное сообщение как рассылку?')
+        await bot.send_message(chat_id=m.from_user.id,
+                               text=f"{data['spam']}",
+                               reply_markup=kb.admin_email_spam_confirm_kb)
+        await state.finish()
+
+###Confirm email message text
+@dp.callback_query_handler(lambda call: call.data == 'confirm_spam_email')
+async def confirm_spam(c: types.CallbackQuery):
+    users = s.query(User).filter(User.email!='No').all()
+    msg.attach(MIMEText(c.message.text, 'plain'))
+    server = smtplib.SMTP('smtp.gmail.com: 587')
+    server.starttls()
+    server.login(msg['From'], password)
+    for user in users:
+        if user.is_admin == False:
+            msg['To']=user.email
+            server.sendmail(msg['From'],msg['To'], msg.as_string())
+    server.quit()
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Рассылка была отправлена успешно!',
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_admin_menu_kb)
+#endregion
+
+#region spam in all chanels
+###Start spam in telegram and email
+@dp.callback_query_handler(lambda call: call.data == 'spam_to_everything')
+async def spam_to_tg(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMSpamAll.text.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите текст рассылки: ",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMSpamAll.text)
+async def load_spam_admin(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['spam'] = m.text
+        await bot.send_message(chat_id=m.from_user.id,
+                               text='Отправлять данное сообщение как рассылку?')
+        await bot.send_message(chat_id=m.from_user.id,
+                               text=f"{data['spam']}",
+                               reply_markup=kb.admin_all_spam_confirm_kb)
+        await state.finish()
+
+###Confirm message text for all users
+@dp.callback_query_handler(lambda call: call.data == 'confirm_spam_all')
+async def confirm_spam(c: types.CallbackQuery):
+    users_email = s.query(User).filter(User.email!='No').all()
+    msg.attach(MIMEText(c.message.text, 'plain'))
+    server = smtplib.SMTP('smtp.gmail.com: 587')
+    server.starttls()
+    server.login(msg['From'], password)
+    for user in users_email:
+        if user.is_admin == False:
+            msg['To']=user.email
+            server.sendmail(msg['From'],msg['To'], msg.as_string())
+    server.quit()
+    users_tg = s.query(User).filter(User.phone_number!='No').all()
+    for user in users_tg:
+        if user.is_admin == False:
+            await bot.send_message(chat_id=user.chat_id,
+                                   text=c.message.text)
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Рассылка была отправлена успешно!',
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_admin_menu_kb)
+#endregion
+
+#Users bot interface
+###Start function
+@dp.message_handler(commands=['start'])
+async def process_start_command(message: types.Message):
+    current_user_admin = await check_is_admin(message.from_user.id)
+    if current_user_admin == True:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Добро пожаловать в администратувную панель!',
+                               reply_markup=kb.admin_menu_kb)
+    else:
+        r = s.query(User).filter(User.chat_id==message.from_user.id).all()
+        if len(r) == 0:
+            await message.reply("Для пользования ботом нужно добавить свои "
+                                "контактные данные", reply_markup=kb.start_inline_kb)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
+                                        "тебе лучшие казино для игры и выигрыша",
+                                   reply_markup=kb.main_menu_kb)
+
+###Back to main menu function
 @dp.callback_query_handler(lambda call: call.data == 'back_to_menu')
 async def telegram_contacts(c: types.CallbackQuery):
     await bot.edit_message_text(chat_id=c.from_user.id,
@@ -280,9 +649,22 @@ async def telegram_contacts(c: types.CallbackQuery):
                                 message_id=c.message.message_id,
                                 reply_markup=kb.main_menu_kb)
 
+###Welcome bonus page
 @dp.callback_query_handler(lambda call: call.data == 'welcome_bonus')
 async def welcome_bonus(c: types.CallbackQuery):
+    m_text = "Вам, как пользователю нашего сайта, полагается бонус, просто введите промокод LUDOBZOR при регистрации в следующих казино:\n"
+    casino = s.query(Casino).filter(Casino.type == 'welcome').all()
+    count = 1
+    for cas in casino:
+        temp_text = f"{count}. " + link(cas.casino_name, cas.link) + ". " + cas.casino_description + '\n'
+        m_text += temp_text
+        count += 1
     await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=m_text,
+                                parse_mode="Markdown",
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_menu_kb)
+    """await bot.edit_message_text(chat_id=c.from_user.id,
                                 text="Вам, как пользователю нашего сайта, полагается бонус "
                                 "в размере XXX YYY! Просто введите промокод LUDOBZOR при "
                                 "регистрации в следующих казино:\n"+
@@ -294,11 +676,24 @@ async def welcome_bonus(c: types.CallbackQuery):
                                      url='https://ludobzor.com/bonusy/'),
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
-                                reply_markup=kb.back_to_menu_kb)
+                                reply_markup=kb.back_to_menu_kb)"""
 
+###Top casino page
 @dp.callback_query_handler(lambda call: call.data == 'casino_top')
 async def welcome_bonus(c: types.CallbackQuery):
+    m_text = "Сейчас лучшие для выбора казино это:\n"
+    casino = s.query(Casino).filter(Casino.type == 'top').all()
+    count = 1
+    for cas in casino:
+        temp_text = f"{count}. " + link(cas.casino_name, cas.link) + ". " + cas.casino_description + '\n'
+        m_text += temp_text
+        count += 1
     await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=m_text,
+                                parse_mode="Markdown",
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_menu_kb)
+    """await bot.edit_message_text(chat_id=c.from_user.id,
                                 text="Сейчас лучшие для выбора казино это:\n "+
                                 link('Casino A',
                                      url='https://ludobzor.com/bonusy/') + '\n' +
@@ -308,11 +703,24 @@ async def welcome_bonus(c: types.CallbackQuery):
                                      url='https://ludobzor.com/bonusy/'),
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
-                                reply_markup=kb.back_to_menu_kb)
+                                reply_markup=kb.back_to_menu_kb)"""
 
+###Casino bonus page
 @dp.callback_query_handler(lambda call: call.data == 'bonus_top')
 async def welcome_bonus(c: types.CallbackQuery):
+    m_text = "Самые большие бонусы:\n"
+    casino = s.query(Casino).filter(Casino.type == 'bonus').all()
+    count = 1
+    for cas in casino:
+        temp_text = f"{count}. " + link(cas.casino_name, cas.link) + ". " + cas.casino_description + '\n'
+        m_text += temp_text
+        count += 1
     await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=m_text,
+                                parse_mode="Markdown",
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_menu_kb)
+    """await bot.edit_message_text(chat_id=c.from_user.id,
                                 text="Самые большие бонусы:\n "+
                                 link('Casino A',
                                      url='https://ludobzor.com/bonusy/') + '\n' +
@@ -322,8 +730,20 @@ async def welcome_bonus(c: types.CallbackQuery):
                                      url='https://ludobzor.com/bonusy/'),
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
+                                reply_markup=kb.back_to_menu_kb)"""
+
+###Support page
+@dp.callback_query_handler(lambda call: call.data == 'support')
+async def support(c: types.CallbackQuery):
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Нажмите на ссылку ниже, чтобы перейти к общению с оператором:\n' +
+                                     link('Поддержка Ludobzor',
+                                          url='https://t.me/ludobzor_support_bot'),
+                                parse_mode="Markdown",
+                                message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)
 
+#region add telegram contacts
 @dp.callback_query_handler(lambda call: call.data == 'telegram_contacts')
 async def telegram_contacts(c: types.CallbackQuery, state: FSMContext):
     await cl.FSMContactsPhone.phone.set()
@@ -343,7 +763,7 @@ async def load_tg_phone(m: types.Message, state: FSMContext):
                                  first_name=m.from_user.first_name,
                                  second_name=m.from_user.last_name,
                                  phone_number=data['phone_number'],
-                                 email='None',
+                                 email='No',
                                  is_admin=False)
             await bot.send_message(chat_id=m.from_user.id,
                                    text=f"Номер телефона:{data['phone_number']}")
@@ -365,7 +785,9 @@ async def load_tg_phone(m: types.Message, state: FSMContext):
     await m.answer(text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
                        "тебе лучшие казино для игры и выигрыша",
                    reply_markup=kb.main_menu_kb)
+#endregion
 
+#region add whatsapp contacts
 @dp.callback_query_handler(lambda call: call.data == 'whatsapp_contacts')
 async def whatsapp_contacts(c: types.CallbackQuery, state: FSMContext):
     await cl.FSMContactsPhone.phone.set()
@@ -393,7 +815,9 @@ async def load_wapp_phone(m: types.Message, state: FSMContext):
     await m.answer(text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
                        "тебе лучшие казино для игры и выигрыша",
                    reply_markup=kb.main_menu_kb)
+#endregion
 
+#region add email
 @dp.callback_query_handler(lambda call: call.data == 'email_contacts')
 async def email_contacts(c: types.CallbackQuery, state: FSMContext):
     await cl.FSMContactsEmail.email.set()
@@ -418,6 +842,7 @@ async def load_email(m: types.Message, state: FSMContext):
     await m.answer(text="Привет! Я - Лудобзор-Бот. Я помогу подобрать "
                        "тебе лучшие казино для игры и выигрыша",
                    reply_markup=kb.main_menu_kb)
+#endregion
 
 '''@dp.message_handler(text="Telegram")
 async def telegram_contacts(message: types.Message):

@@ -19,7 +19,7 @@ phone_numb_kb.add(KeyboardButton("Отправить свой контакт", r
 main_menu_kb = InlineKeyboardMarkup()
 main_menu_kb.add(InlineKeyboardButton("Приветственный бонус", callback_data='welcome_bonus'))
 main_menu_kb.row(InlineKeyboardButton("Топ казино", callback_data='casino_top'), InlineKeyboardButton('Топ бонусов', callback_data='bonus_top'))
-main_menu_kb.add(InlineKeyboardButton('Задать вопрос оператору', callback_data='operator'))
+main_menu_kb.add(InlineKeyboardButton('Задать вопрос оператору', callback_data='support'))
 
 back_to_menu_kb = InlineKeyboardMarkup()
 back_to_menu_kb.add(InlineKeyboardButton("Вернуться назад", callback_data='back_to_menu'))
@@ -30,6 +30,52 @@ back_to_admin_menu_kb.add(InlineKeyboardButton('Назад к меню адми�
 admin_menu_kb = InlineKeyboardMarkup()
 admin_menu_kb.add(InlineKeyboardButton('Рассылка', callback_data='spam'))
 admin_menu_kb.add(InlineKeyboardButton('Управление администраторами', callback_data='managing_admin'))
+admin_menu_kb.add(InlineKeyboardButton('Управление списками казино', callback_data='managing_casino'))
+
+managing_casino_kb = InlineKeyboardMarkup()
+managing_casino_kb.add(InlineKeyboardButton('Список топ казино', callback_data='top_casino_a'))
+managing_casino_kb.add(InlineKeyboardButton('Список топ бонусов', callback_data='top_bonus_a'))
+managing_casino_kb.add(InlineKeyboardButton('Приветственный бонус', callback_data='welcome_bonus_a'))
+managing_casino_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+top_casino_kb = InlineKeyboardMarkup()
+top_casino_kb.add(InlineKeyboardButton('Добавить', callback_data='add_top'))
+top_casino_kb.add(InlineKeyboardButton('Удалить', callback_data='casinodel_top'))
+top_casino_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+top_add_else_kb = InlineKeyboardMarkup()
+top_add_else_kb.add(InlineKeyboardButton('Добавить еще', callback_data='add_top'))
+top_add_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+top_del_else_kb = InlineKeyboardMarkup()
+top_del_else_kb.add(InlineKeyboardButton('Удалить еще', callback_data='casinodel_top'))
+top_del_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+top_bonus_kb = InlineKeyboardMarkup()
+top_bonus_kb.add(InlineKeyboardButton('Добавить', callback_data='add_bonus'))
+top_bonus_kb.add(InlineKeyboardButton('Удалить', callback_data='casinodel_bonus'))
+top_bonus_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+bonus_add_else_kb = InlineKeyboardMarkup()
+bonus_add_else_kb.add(InlineKeyboardButton('Добавить еще', callback_data='add_bonus'))
+bonus_add_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+bonus_del_else_kb = InlineKeyboardMarkup()
+bonus_del_else_kb.add(InlineKeyboardButton('Удалить еще', callback_data='casinodel_bonus'))
+bonus_del_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+welcome_kb = InlineKeyboardMarkup()
+welcome_kb.add(InlineKeyboardButton('Добавить', callback_data='add_welcome'))
+welcome_kb.add(InlineKeyboardButton('Удалить', callback_data='casinodel_welcome'))
+welcome_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+welcome_add_else_kb = InlineKeyboardMarkup()
+welcome_add_else_kb.add(InlineKeyboardButton('Добавить еще', callback_data='add_welcome'))
+welcome_add_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+welcome_del_else_kb = InlineKeyboardMarkup()
+welcome_del_else_kb.add(InlineKeyboardButton('Удалить еще', callback_data='casinodel_welcome'))
+welcome_del_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
 admin_controls_kb = InlineKeyboardMarkup()
 admin_controls_kb.add(InlineKeyboardButton('Добавление администратора', callback_data='add_admin'))
@@ -48,9 +94,16 @@ admin_spam_kb.add(InlineKeyboardButton('Рассылка по всем кана�
 admin_spam_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
 admin_spam_confirm_kb = InlineKeyboardMarkup()
-admin_spam_confirm_kb.add(InlineKeyboardButton('Отправить', callback_data='confirm_spam'))
+admin_spam_confirm_kb.add(InlineKeyboardButton('Отправить', callback_data='confirm_spam_tg'))
 admin_spam_confirm_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
+admin_email_spam_confirm_kb = InlineKeyboardMarkup()
+admin_email_spam_confirm_kb.add(InlineKeyboardButton('Отправить', callback_data='confirm_spam_email'))
+admin_email_spam_confirm_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+admin_all_spam_confirm_kb = InlineKeyboardMarkup()
+admin_all_spam_confirm_kb.add(InlineKeyboardButton('Отправить', callback_data='confirm_spam_all'))
+admin_all_spam_confirm_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
 enter_again_admin_username_kb = InlineKeyboardMarkup()
 enter_again_admin_username_kb.add(InlineKeyboardButton('Повторить поиск по никнейму', callback_data='add_from_username'))
