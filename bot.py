@@ -22,8 +22,8 @@ dp = Dispatcher(bot, storage=storage)
 s = Session()
 msg = MIMEMultipart()
 msg['Subject'] = 'Информационная рассылка от Ludobzor'
-msg['From'] = 'speedsolver99@gmail.com'
-password = 'wqtgnrosvovwexyh'
+msg['From'] = 'ludobzor2@gmail.com'
+password = 'hxxxycxrllrmtvgr'
 
 
 """@dp.message_handler(commands=['start'])
