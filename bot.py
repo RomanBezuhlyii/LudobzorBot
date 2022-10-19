@@ -21,9 +21,9 @@ bot = Bot(token=cnfg.TOKEN)
 dp = Dispatcher(bot, storage=storage)
 s = Session()
 msg = MIMEMultipart()
-msg['Subject'] = 'Информационная рассылка от Ludobzor'
-msg['From'] = 'ludobzor2@gmail.com'
-password = 'hxxxycxrllrmtvgr'
+msg['Subject'] = cnfg.subject
+msg['From'] = cnfg.sender
+password = cnfg.password
 
 
 """@dp.message_handler(commands=['start'])
@@ -725,19 +725,6 @@ async def welcome_bonus(c: types.CallbackQuery):
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)
-    """await bot.edit_message_text(chat_id=c.from_user.id,
-                                text="Вам, как пользователю нашего сайта, полагается бонус "
-                                "в размере XXX YYY! Просто введите промокод LUDOBZOR при "
-                                "регистрации в следующих казино:\n"+
-                                link('Casino A',
-                                     url='https://ludobzor.com/bonusy/') + '\n' +
-                                link('Casino B',
-                                     url='https://ludobzor.com/bonusy/') + '\n' +
-                                link('Casino B',
-                                     url='https://ludobzor.com/bonusy/'),
-                                parse_mode="Markdown",
-                                message_id=c.message.message_id,
-                                reply_markup=kb.back_to_menu_kb)"""
 
 ###No deposite bonus page
 @dp.callback_query_handler(lambda call: call.data == 'no_deposite')
@@ -770,17 +757,6 @@ async def welcome_bonus(c: types.CallbackQuery):
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)
-    """await bot.edit_message_text(chat_id=c.from_user.id,
-                                text="Сейчас лучшие для выбора казино это:\n "+
-                                link('Casino A',
-                                     url='https://ludobzor.com/bonusy/') + '\n' +
-                                link('Casino B',
-                                     url='https://ludobzor.com/bonusy/') + '\n' +
-                                link('Casino B',
-                                     url='https://ludobzor.com/bonusy/'),
-                                parse_mode="Markdown",
-                                message_id=c.message.message_id,
-                                reply_markup=kb.back_to_menu_kb)"""
 
 ###Casino bonus page
 @dp.callback_query_handler(lambda call: call.data == 'bonus_top')
@@ -797,17 +773,6 @@ async def welcome_bonus(c: types.CallbackQuery):
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)
-    """await bot.edit_message_text(chat_id=c.from_user.id,
-                                text="Самые большие бонусы:\n "+
-                                link('Casino A',
-                                     url='https://ludobzor.com/bonusy/') + '\n' +
-                                link('Casino B',
-                                     url='https://ludobzor.com/bonusy/') + '\n' +
-                                link('Casino B',
-                                     url='https://ludobzor.com/bonusy/'),
-                                parse_mode="Markdown",
-                                message_id=c.message.message_id,
-                                reply_markup=kb.back_to_menu_kb)"""
 
 ###Support page
 @dp.callback_query_handler(lambda call: call.data == 'support')
@@ -815,7 +780,7 @@ async def support(c: types.CallbackQuery):
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text='Нажмите на ссылку ниже, чтобы перейти к общению с оператором:\n' +
                                      link('Поддержка Ludobzor',
-                                          url='https://t.me/ludobzor_support_bot'),
+                                          url=cnfg.support_link),
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)
