@@ -35,3 +35,8 @@ class FSMCasinoWELCOME(StatesGroup):
     name = State()
     description = State()
     link = State()
+
+class FSMCasinoNODEPOSITE(StatesGroup):
+    name = State()
+    description = State()
+    link = State()

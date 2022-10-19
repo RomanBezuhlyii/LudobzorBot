@@ -19,6 +19,7 @@ phone_numb_kb.add(KeyboardButton("Отправить свой контакт", r
 main_menu_kb = InlineKeyboardMarkup()
 main_menu_kb.add(InlineKeyboardButton("Приветственный бонус", callback_data='welcome_bonus'))
 main_menu_kb.row(InlineKeyboardButton("Топ казино", callback_data='casino_top'), InlineKeyboardButton('Топ бонусов', callback_data='bonus_top'))
+main_menu_kb.add(InlineKeyboardButton('Бездепозитные бонусы', callback_data='no_deposite'))
 main_menu_kb.add(InlineKeyboardButton('Задать вопрос оператору', callback_data='support'))
 
 back_to_menu_kb = InlineKeyboardMarkup()
@@ -35,8 +36,22 @@ admin_menu_kb.add(InlineKeyboardButton('Управление списками к
 managing_casino_kb = InlineKeyboardMarkup()
 managing_casino_kb.add(InlineKeyboardButton('Список топ казино', callback_data='top_casino_a'))
 managing_casino_kb.add(InlineKeyboardButton('Список топ бонусов', callback_data='top_bonus_a'))
+managing_casino_kb.add(InlineKeyboardButton('Список бездепозитных бонусов', callback_data='nodeposite_a'))
 managing_casino_kb.add(InlineKeyboardButton('Приветственный бонус', callback_data='welcome_bonus_a'))
 managing_casino_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+no_deposite_kb = InlineKeyboardMarkup()
+no_deposite_kb.add(InlineKeyboardButton('Добавить', callback_data='add_nodeposite'))
+no_deposite_kb.add(InlineKeyboardButton('Удалить', callback_data='casinodel_nodeposite'))
+no_deposite_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+no_deposite_add_else_kb = InlineKeyboardMarkup()
+no_deposite_add_else_kb.add(InlineKeyboardButton('Добавить еще', callback_data='add_nodeposite'))
+no_deposite_add_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
+
+no_deposite_del_else_kb = InlineKeyboardMarkup()
+no_deposite_del_else_kb.add(InlineKeyboardButton('Удалить еще', callback_data='casinodel_nodeposite'))
+no_deposite_del_else_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
 top_casino_kb = InlineKeyboardMarkup()
 top_casino_kb.add(InlineKeyboardButton('Добавить', callback_data='add_top'))

@@ -302,6 +302,11 @@ async def delete_casino(c: types.CallbackQuery):
                                         text='Казино успешно удалено!',
                                         message_id=c.message.message_id,
                                         reply_markup=kb.welcome_del_else_kb)
+        elif split_str[1]=='nodeposite':
+            await bot.edit_message_text(chat_id=c.from_user.id,
+                                        text='Казино успешно удалено!',
+                                        message_id=c.message.message_id,
+                                        reply_markup=kb.no_deposite_del_else_kb)
     else:
         await bot.send_message(chat_id=c.from_user.id,
                                text="Обратитесь к администратору, чтобы получить доступ!",
@@ -467,6 +472,62 @@ async def load_welcome_casino_link(m: types.Message, state: FSMContext):
                            link=data['link'])
     await m.reply(text='Казино добавлено успешно!',
                   reply_markup=kb.welcome_add_else_kb)
+    await state.finish()
+#endregion
+
+#region work with no deposite bonus
+###Variants of work with no deposite bonus list
+@dp.callback_query_handler(lambda call: call.data == 'nodeposite_a')
+async def welcome_bonus(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text='Что хотите сделать?',
+                                    message_id=c.message.message_id,
+                                    reply_markup=kb.no_deposite_kb)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+###Add casino with welcome bonus
+@dp.callback_query_handler(lambda call: call.data == 'add_nodeposite')
+async def add_welcome_casino(c: types.CallbackQuery):
+    current_user_admin = await check_is_admin(c.from_user.id)
+    if current_user_admin == True:
+        await cl.FSMCasinoNODEPOSITE.name.set()
+        await bot.edit_message_text(chat_id=c.from_user.id,
+                                    text="Введите название казино",
+                                    message_id=c.message.message_id)
+    else:
+        await bot.send_message(chat_id=c.from_user.id,
+                               text="Обратитесь к администратору, чтобы получить доступ!",
+                               reply_markup=kb.back_to_menu_kb)
+
+@dp.message_handler(state=cl.FSMCasinoNODEPOSITE.name)
+async def load_welcome_casino_name(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['name'] = m.text
+    await cl.FSMCasinoNODEPOSITE.next()
+    await m.reply(text='Введите описание бонусов')
+
+@dp.message_handler(state=cl.FSMCasinoNODEPOSITE.description)
+async def load_welcome_casino_description(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['description'] = m.text
+    await cl.FSMCasinoNODEPOSITE.next()
+    await m.reply(text='Введите ссылку на казино')
+
+@dp.message_handler(state=cl.FSMCasinoNODEPOSITE.link)
+async def load_welcome_casino_link(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['link'] = m.text
+    await add_casino_to_db(type='nodeposite',
+                           name=data['name'],
+                           description=data['description'],
+                           link=data['link'])
+    await m.reply(text='Казино добавлено успешно!',
+                  reply_markup=kb.no_deposite_add_else_kb)
     await state.finish()
 #endregion
 
@@ -677,6 +738,22 @@ async def welcome_bonus(c: types.CallbackQuery):
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)"""
+
+###No deposite bonus page
+@dp.callback_query_handler(lambda call: call.data == 'no_deposite')
+async def no_deposite_bonus(c: types.CallbackQuery):
+    m_text = "Бездепозитные бонусы по промокоду LUDOBZOR:\n"
+    casino = s.query(Casino).filter(Casino.type == 'nodeposite').all()
+    count = 1
+    for cas in casino:
+        temp_text = f"{count}. " + link(cas.casino_name, cas.link) + ". " + cas.casino_description + '\n'
+        m_text += temp_text
+        count += 1
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=m_text,
+                                parse_mode="Markdown",
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_menu_kb)
 
 ###Top casino page
 @dp.callback_query_handler(lambda call: call.data == 'casino_top')
