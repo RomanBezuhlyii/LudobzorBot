@@ -8,6 +8,9 @@ class FSMContactsPhone(StatesGroup):
 class FSMContactsEmail(StatesGroup):
     email = State()
 
+class FSMAdminEmail(StatesGroup):
+    email = State()
+
 class FSMAdminInfo(StatesGroup):
     phone_number = State()
     username = State()

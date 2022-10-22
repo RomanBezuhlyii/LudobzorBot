@@ -9,8 +9,8 @@ start_kb.add(KeyboardButton("WhatsApp"))
 start_kb.add(KeyboardButton("Email"))
 
 start_inline_kb = InlineKeyboardMarkup()
-start_inline_kb.add(InlineKeyboardButton("Telegram", callback_data='telegram_contacts'))
-start_inline_kb.add(InlineKeyboardButton("WhatsApp", callback_data='whatsapp_contact'))
+#start_inline_kb.add(InlineKeyboardButton("Telegram", callback_data='telegram_contacts'))
+#start_inline_kb.add(InlineKeyboardButton("WhatsApp", callback_data='whatsapp_contact'))
 start_inline_kb.add(InlineKeyboardButton("Email", callback_data='email_contacts'))
 
 phone_numb_kb = ReplyKeyboardMarkup(resize_keyboard=True,one_time_keyboard=True)
@@ -32,6 +32,11 @@ admin_menu_kb = InlineKeyboardMarkup()
 admin_menu_kb.add(InlineKeyboardButton('Рассылка', callback_data='spam'))
 admin_menu_kb.add(InlineKeyboardButton('Управление администраторами', callback_data='managing_admin'))
 admin_menu_kb.add(InlineKeyboardButton('Управление списками казино', callback_data='managing_casino'))
+admin_menu_kb.add(InlineKeyboardButton('Добавить пользователя по email из jivo', callback_data='jivo_email'))
+
+add_jivo_email_kb = InlineKeyboardMarkup()
+add_jivo_email_kb.add(InlineKeyboardButton('Добавит еще пользователя', callback_data='jivo_email'))
+add_jivo_email_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
 managing_casino_kb = InlineKeyboardMarkup()
 managing_casino_kb.add(InlineKeyboardButton('Список топ казино', callback_data='top_casino_a'))
@@ -99,7 +104,7 @@ admin_controls_kb.add(InlineKeyboardButton('Назад к меню админи�
 
 add_admin_choice_kb = InlineKeyboardMarkup()
 add_admin_choice_kb.add(InlineKeyboardButton('Добавить по никнейму', callback_data='add_from_username'))
-add_admin_choice_kb.add(InlineKeyboardButton('Добавить по номеру телефона', callback_data='add_from_phone'))
+#add_admin_choice_kb.add(InlineKeyboardButton('Добавить по номеру телефона', callback_data='add_from_phone'))
 add_admin_choice_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
 
 admin_spam_kb = InlineKeyboardMarkup()

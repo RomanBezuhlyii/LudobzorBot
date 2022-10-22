@@ -681,6 +681,8 @@ async def confirm_spam(c: types.CallbackQuery):
                                 reply_markup=kb.back_to_admin_menu_kb)
 #endregion
 
+
+
 #Users bot interface
 ###Start function
 @dp.message_handler(commands=['start'])
@@ -818,7 +820,7 @@ async def load_tg_phone(m: types.Message, state: FSMContext):
                                  first_name=m.from_user.first_name,
                                  second_name=m.from_user.last_name,
                                  phone_number=data['phone_number'],
-                                 email='None',
+                                 email='No',
                                  is_admin=False)
             await bot.send_message(chat_id=m.from_user.id,
                                    text=f"Номер телефона:{data['phone_number']}")
@@ -885,6 +887,30 @@ async def load_email(m: types.Message, state: FSMContext):
                        "тебе лучшие казино для игры и выигрыша",
                    reply_markup=kb.main_menu_kb)
 #endregion
+
+@dp.callback_query_handler(lambda call: call.data == 'jivo_email')
+async def email_contacts(c: types.CallbackQuery, state: FSMContext):
+    await cl.FSMAdminEmail.email.set()
+    await bot.send_message(c.from_user.id,
+                           text="Введите email пользователя в формате: \nludobzor@ludobzor.com")
+
+@dp.message_handler(state=cl.FSMAdminEmail.email)
+async def load_email(m: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['email'] = m.text
+        await add_user_to_db(chat_id='No',
+                             username='No',
+                             first_name='No',
+                             second_name='No',
+                             phone_number='No',
+                             email=data['email'],
+                             is_admin=False)
+        await bot.send_message(chat_id=m.from_user.id,
+                               text=f"Email:{data['email']}")
+        await state.finish()
+    await m.answer("Контактные данные успешно добавлены")
+    await m.answer(text="Хотите добавит еще пользователя?",
+                   reply_markup=kb.add_jivo_email_kb)
 
 '''@dp.message_handler(text="Telegram")
 async def telegram_contacts(message: types.Message):
