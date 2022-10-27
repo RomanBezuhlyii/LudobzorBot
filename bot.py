@@ -20,10 +20,7 @@ storage = MemoryStorage()
 bot = Bot(token=cnfg.TOKEN)
 dp = Dispatcher(bot, storage=storage)
 s = Session()
-msg = MIMEMultipart()
-msg['Subject'] = cnfg.subject
-msg['From'] = cnfg.sender
-password = cnfg.password
+
 
 
 """@dp.message_handler(commands=['start'])
@@ -553,8 +550,12 @@ async def spam_to_tg(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
     if current_user_admin == True:
         await cl.FSMSpam.spam_message.set()
+        template_text = f"Не сбавляем обороты!🎰  \n" \
+                        f"Врываемся в будни на волне эпических выигрышей!🤑\n" \
+                        f"💸Горячие промокоды,  эксклюзивные бонусы все это ждет тебя на ТУТ БУДЕТ ВСТАВЛЕН ВАШ ТЕКСТ\n" \
+                        f"💰Проходи и забирай свои подарки"
         await bot.edit_message_text(chat_id=c.from_user.id,
-                                    text="Введите текст рассылки: ",
+                                    text="Введите текст рассылки, который будет вставлен в шаблон: " + "\n" + template_text,
                                     message_id=c.message.message_id)
     else:
         await bot.send_message(chat_id=c.from_user.id,
@@ -576,10 +577,14 @@ async def load_spam_admin(m: types.Message, state: FSMContext):
 @dp.callback_query_handler(lambda call: call.data == 'confirm_spam_tg')
 async def confirm_spam(c: types.CallbackQuery):
     users = s.query(User).filter(User.phone_number!='No').all()
+    msg_text = f"Не сбавляем обороты!🎰  \n" \
+               f"Врываемся в будни на волне эпических выигрышей!🤑\n" \
+               f"💸Горячие промокоды,  эксклюзивные бонусы все это ждет тебя на {c.message.text}\n" \
+               f"💰Проходи и забирай свои подарки"
     for user in users:
         if user.is_admin == False:
             await bot.send_message(chat_id=user.chat_id,
-                                   text=c.message.text)
+                                   text=msg_text)
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text='Рассылка была отправлена успешно!',
                                 message_id=c.message.message_id,
@@ -593,8 +598,12 @@ async def spam_to_tg(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
     if current_user_admin == True:
         await cl.FSMSpamEmail.text.set()
+        template_text = f"Не сбавляем обороты!🎰  \n" \
+               f"Врываемся в будни на волне эпических выигрышей!🤑\n" \
+               f"💸Горячие промокоды,  эксклюзивные бонусы все это ждет тебя на ТУТ БУДЕТ ВСТАВЛЕН ВАШ ТЕКСТ\n" \
+               f"💰Проходи и забирай свои подарки"
         await bot.edit_message_text(chat_id=c.from_user.id,
-                                    text="Введите текст рассылки: ",
+                                    text="Введите текст рассылки, который будет вставлен в шаблон: " + "\n" + template_text,
                                     message_id=c.message.message_id)
     else:
         await bot.send_message(chat_id=c.from_user.id,
@@ -606,7 +615,7 @@ async def load_spam_admin(m: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['spam'] = m.text
         await bot.send_message(chat_id=m.from_user.id,
-                               text='Отправлять данное сообщение как рассылку?')
+                               text='Данный текст рассылки верен?')
         await bot.send_message(chat_id=m.from_user.id,
                                text=f"{data['spam']}",
                                reply_markup=kb.admin_email_spam_confirm_kb)
@@ -615,15 +624,25 @@ async def load_spam_admin(m: types.Message, state: FSMContext):
 ###Confirm email message text
 @dp.callback_query_handler(lambda call: call.data == 'confirm_spam_email')
 async def confirm_spam(c: types.CallbackQuery):
+
+    password = cnfg.password
     users = s.query(User).filter(User.email!='No').all()
-    msg.attach(MIMEText(c.message.text, 'plain'))
+    msg_text = f"Не сбавляем обороты!🎰  \n" \
+               f"Врываемся в будни на волне эпических выигрышей!🤑\n" \
+               f"💸Горячие промокоды,  эксклюзивные бонусы все это ждет тебя на {c.message.text}\n" \
+               f"💰Проходи и забирай свои подарки"
+
     server = smtplib.SMTP('smtp.gmail.com: 587')
     server.starttls()
-    server.login(msg['From'], password)
+    server.login(cnfg.sender, password)
     for user in users:
         if user.is_admin == False:
+            msg = MIMEMultipart()
+            msg['Subject'] = cnfg.subject
+            msg['From'] = cnfg.sender
+            msg.attach(MIMEText(msg_text, 'plain'))
             msg['To']=user.email
-            server.sendmail(msg['From'],msg['To'], msg.as_string())
+            server.sendmail(msg['From'], msg['To'], msg.as_string())
     server.quit()
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text='Рассылка была отправлена успешно!',
@@ -638,8 +657,12 @@ async def spam_to_tg(c: types.CallbackQuery):
     current_user_admin = await check_is_admin(c.from_user.id)
     if current_user_admin == True:
         await cl.FSMSpamAll.text.set()
+        template_text = f"Не сбавляем обороты!🎰  \n" \
+                        f"Врываемся в будни на волне эпических выигрышей!🤑\n" \
+                        f"💸Горячие промокоды,  эксклюзивные бонусы все это ждет тебя на ТУТ БУДЕТ ВСТАВЛЕН ВАШ ТЕКСТ\n" \
+                        f"💰Проходи и забирай свои подарки"
         await bot.edit_message_text(chat_id=c.from_user.id,
-                                    text="Введите текст рассылки: ",
+                                    text="Введите текст рассылки, который будет вставлен в шаблон: " + "\n" + template_text,
                                     message_id=c.message.message_id)
     else:
         await bot.send_message(chat_id=c.from_user.id,
@@ -660,21 +683,30 @@ async def load_spam_admin(m: types.Message, state: FSMContext):
 ###Confirm message text for all users
 @dp.callback_query_handler(lambda call: call.data == 'confirm_spam_all')
 async def confirm_spam(c: types.CallbackQuery):
-    users_email = s.query(User).filter(User.email!='No').all()
-    msg.attach(MIMEText(c.message.text, 'plain'))
+    password = cnfg.password
+    users = s.query(User).filter(User.email != 'No').all()
+    msg_text = f"Не сбавляем обороты!🎰  \n" \
+               f"Врываемся в будни на волне эпических выигрышей!🤑\n" \
+               f"💸Горячие промокоды,  эксклюзивные бонусы все это ждет тебя на {c.message.text}\n" \
+               f"💰Проходи и забирай свои подарки"
+
     server = smtplib.SMTP('smtp.gmail.com: 587')
     server.starttls()
-    server.login(msg['From'], password)
-    for user in users_email:
+    server.login(cnfg.sender, password)
+    for user in users:
         if user.is_admin == False:
-            msg['To']=user.email
-            server.sendmail(msg['From'],msg['To'], msg.as_string())
+            msg = MIMEMultipart()
+            msg['Subject'] = cnfg.subject
+            msg['From'] = cnfg.sender
+            msg.attach(MIMEText(msg_text, 'plain'))
+            msg['To'] = user.email
+            server.sendmail(msg['From'], msg['To'], msg.as_string())
     server.quit()
     users_tg = s.query(User).filter(User.phone_number!='No').all()
     for user in users_tg:
         if user.is_admin == False:
             await bot.send_message(chat_id=user.chat_id,
-                                   text=c.message.text)
+                                   text=msg_text)
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text='Рассылка была отправлена успешно!',
                                 message_id=c.message.message_id,
