@@ -84,8 +84,9 @@ async def managing_admin(c: types.CallbackQuery):
         counter = 0
         admins = s.query(User).filter(User.is_admin == True).all()
         for admin in admins:
-            counter += 1
-            admin_str += f"{counter}. Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
+            if admin.username != 'nBogza':
+                counter += 1
+                admin_str += f"{counter}. Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text=admin_str,
                                     message_id=c.message.message_id,
@@ -106,11 +107,12 @@ async def delete_admin_list(c: types.CallbackQuery):
         counter = 0
         for admin in admins:
             if admin.chat_id != str(c.from_user.id):
-                print(type(c.from_user.id))
-                print(f"Айди из БД: {admin.chat_id}, Мое Айди: {c.from_user.id} не равно")
-                admins_delete_kb.add(InlineKeyboardButton(f'{admin.chat_id}', callback_data=f'delete_{admin.chat_id}'))
-                counter += 1
-                admin_str += f"{counter}. Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
+                if admin.username != 'nBogza':
+                    print(type(c.from_user.id))
+                    print(f"Айди из БД: {admin.chat_id}, Мое Айди: {c.from_user.id} не равно")
+                    admins_delete_kb.add(InlineKeyboardButton(f'{admin.chat_id}', callback_data=f'delete_{admin.chat_id}'))
+                    counter += 1
+                    admin_str += f"{counter}. Chat id: {admin.chat_id}, Никнейм: {admin.username}, Телефон: {admin.phone_number}\n"
         admins_delete_kb.add(InlineKeyboardButton('Назад к меню администратора', callback_data='back_to_admin_menu'))
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text=admin_str,
@@ -120,7 +122,6 @@ async def delete_admin_list(c: types.CallbackQuery):
         await bot.send_message(chat_id=c.from_user.id,
                                text="Обратитесь к администратору, чтобы получить доступ!",
                                reply_markup=kb.back_to_menu_kb)
-
 
 ###Delete admin which choose current user(admin)
 @dp.callback_query_handler(lambda call: call.data.startswith('delete_'))
@@ -132,7 +133,7 @@ async def delete_admin(c: types.CallbackQuery):
         s.commit()
         #s.close()
         await bot.send_message(chat_id=int(split_str[1]),
-                               text='Вы лишены прав администратора!\n Введите команду '
+                               text='Вы лишены прав администратора!\nВведите команду '
                                     '/start чтобы заново зайти в меню бота')
         await bot.edit_message_text(chat_id=c.from_user.id,
                                     text='Администратор успешно удален!',
@@ -191,8 +192,8 @@ async def load_username_admin(m: types.Message, state: FSMContext):
             s.commit()
             #s.close()
             await bot.send_message(chat_id=int(user.chat_id),
-                                   text='Теперь у вас есть права администратора! /nВведите команду '
-                                        '/start, чтобы открыть панель администратора')
+                                   text="Теперь у вас есть права администратора!\nВведите команду "
+                                        "/start, чтобы открыть панель администратора")
             await m.answer(text="Администратор успешно добавлен!",
                            reply_markup=kb.back_to_admin_menu_kb)
 
@@ -735,6 +736,64 @@ async def process_start_command(message: types.Message):
                                         "тебе лучшие казино для игры и выигрыша",
                                    reply_markup=kb.main_menu_kb)
 
+@dp.callback_query_handler(lambda call: call.data == 'questions')
+async def questions(c: types.CallbackQuery):
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text='Какой вопрос Вас интересует?',
+                                message_id=c.message.message_id,
+                                reply_markup=kb.questions_kb)
+
+@dp.callback_query_handler(lambda call: call.data == 'where_links')
+async def where_links(c: types.CallbackQuery):
+    text = "Для получения ссылки на официальный сайт казино воспользуйтесь поисковой системой " \
+           "Гугл или Яндекс. Введите в строку поиска название Казино и нажмите на 'Поиск'  " \
+           "Можно проверить официальный сайт через валидатор. Валидатор - это знак того, что сайт " \
+           "лицензионный. Найти его можно на стартовой странице Казино внизу.\n\nТакже пользователи нашего " \
+           "сайта могут:"\
+           "\n\t●	Обратиться в поддержку через функционал Online-чата"\
+           "\n\t●	Перейти в чат поддержки мессенджера Telegram или What's up"\
+           "\n\t●	В Telegram канале Ludobzor\n\n"\
+           "Не забудьте при регистрации использовать промокод с нашего сайта чтобы получить бонус!"
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=text,
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_questions_kb)
+
+@dp.callback_query_handler(lambda call: call.data == 'how_use_promo')
+async def how_use_promo(c: types.CallbackQuery):
+    text = "Уникальный промокод LUDOBZOR  доступен игрокам, которые только собираются пройти " \
+           "регистрацию в казино. Хотим обратить Ваше внимание, что промокод необходимо вводить " \
+           "непосредственно в момент регистрации в строке 'Есть промокод?'. После чего необходимо " \
+           "подтвердить адрес электронной почты и номер телефона. При активации данного промокода Вы " \
+           "получите бонусы на свой счет."
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=text,
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_questions_kb)
+
+@dp.callback_query_handler(lambda call: call.data == 'register_in_website')
+async def register_in_website(c: types.CallbackQuery):
+    text = "Для регистрации Вам достаточно нажать кнопку 'Зарегистрироваться' на сайте, указать Ваш " \
+           "действующий адрес электронной почты и придумать пароль, который Вы будете использовать для " \
+           "входа в Ваш профиль. Также Вы можете зарегистрироваться через одну из представленных социальных " \
+           "сетей. Это все! Вы являетесь владельцем аккаунта  с возможностью играть, выигрывать и " \
+           "получать выигрыши.\n\nНе забудьте при регистрации использовать промокод с нашего сайта " \
+           "чтобы получить бонус!"
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=text,
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_questions_kb)
+
+@dp.callback_query_handler(lambda call: call.data == 'more_bonus')
+async def more_bonus(c: types.CallbackQuery):
+    text = "Наш проект всегда готов давать нашим посетителей самое лучшее." \
+           " Следите за нашими рассылками, в них регулярно приходит что-то интересное. " \
+           "Дополнительные акции Вы всегда можете найти в соц.сетях нашего проекта."
+    await bot.edit_message_text(chat_id=c.from_user.id,
+                                text=text,
+                                message_id=c.message.message_id,
+                                reply_markup=kb.back_to_questions_kb)
+
 ###Back to main menu function
 @dp.callback_query_handler(lambda call: call.data == 'back_to_menu')
 async def telegram_contacts(c: types.CallbackQuery):
@@ -943,6 +1002,8 @@ async def load_email(m: types.Message, state: FSMContext):
     await m.answer("Контактные данные успешно добавлены")
     await m.answer(text="Хотите добавит еще пользователя?",
                    reply_markup=kb.add_jivo_email_kb)
+
+
 
 '''@dp.message_handler(text="Telegram")
 async def telegram_contacts(message: types.Message):

@@ -1,0 +1,62 @@
+version: "3"
+networks:
+    web:
+        external: true
+        driver: bridge
+
+volumes:
+    db:
+
+services:
+  selenoid:
+    image: aerokube/selenoid:latest
+    container_name: selenoid-hub
+    #network_mode: bridge
+    restart: always
+    ports:
+      - 4444:4444
+    volumes:
+      - "/C/Users/speed/Desktop/pythonProject/work/FavBet_falsk:/etc/selenoid"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+        - web
+    command: ["-conf", "/etc/selenoid/browsers.json", "-container-network", "web", "-limit", "8", "-timeout", "10m"]
+
+
+  selenoid-ui:
+    image: aerokube/selenoid-ui:latest
+    container_name: selenoid_ui
+    #network_mode: bridge
+    networks:
+        - web
+    restart: always
+    links:
+      - selenoid
+    ports:
+      - 8080:8080
+    #privileged: true
+    #shm_size: 2g
+    command: ["--selenoid-uri", "http://selenoid:4444"]
+
+  #chrome_80.0:
+  #  image: "selenoid/vnc:chrome_80.0"
+  #  container_name: chrome_80.0
+  #  links:
+  #    - selenoid
+  #    - selenoid-ui
+  #  depends_on:
+  #    - selenoid
+  #    - selenoid-ui
+  #  networks:
+  #    - web
+
+  favbet:
+    image: favbet_app:latest
+    restart: always
+    container_name: favbet_apps
+    volumes:
+        - db:/usr/src/FavBet_flask/database/
+    ports:
+        - 5000:5000
+    networks:
+        - web

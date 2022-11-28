@@ -20,7 +20,18 @@ main_menu_kb = InlineKeyboardMarkup()
 main_menu_kb.add(InlineKeyboardButton("Приветственный бонус", callback_data='welcome_bonus'))
 main_menu_kb.row(InlineKeyboardButton("Топ казино", callback_data='casino_top'), InlineKeyboardButton('Топ бонусов', callback_data='bonus_top'))
 main_menu_kb.add(InlineKeyboardButton('Бездепозитные бонусы', callback_data='no_deposite'))
+main_menu_kb.add(InlineKeyboardButton('Часто задаваемые вопросы', callback_data='questions'))
 main_menu_kb.add(InlineKeyboardButton('Задать вопрос оператору', callback_data='support'))
+
+back_to_questions_kb = InlineKeyboardMarkup()
+back_to_questions_kb.add(InlineKeyboardButton('Вернуться назад', callback_data='questions'))
+
+questions_kb = InlineKeyboardMarkup()
+questions_kb.add(InlineKeyboardButton('Где найти ссылки казино?', callback_data='where_links'))
+questions_kb.add(InlineKeyboardButton('Как использовать промокод?', callback_data='how_use_promo'))
+questions_kb.add(InlineKeyboardButton('Регистрация на сайте казино', callback_data='register_in_website'))
+questions_kb.add(InlineKeyboardButton('Хочу получать у Вас больше бонусов', callback_data='more_bonus'))
+questions_kb.add(InlineKeyboardButton('Вернуться назад', callback_data='back_to_menu'))
 
 back_to_menu_kb = InlineKeyboardMarkup()
 back_to_menu_kb.add(InlineKeyboardButton("Вернуться назад", callback_data='back_to_menu'))
