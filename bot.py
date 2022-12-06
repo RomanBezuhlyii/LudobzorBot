@@ -753,9 +753,14 @@ async def where_links(c: types.CallbackQuery):
            "\n\t●	Обратиться в поддержку через функционал Online-чата"\
            "\n\t●	Перейти в чат поддержки мессенджера Telegram или What's up"\
            "\n\t●	В Telegram канале Ludobzor\n\n"\
-           "Не забудьте при регистрации использовать промокод с нашего сайта чтобы получить бонус!"
+           "Не забудьте при регистрации использовать промокод с нашего сайта чтобы получить бонус!" \
+           "Так же обратите внимание на чат поддержки в наших соц. сетях:\n" + \
+           link('Чат поддержки в Telegram', url=cnfg.support_tg_link) + "\n" + \
+           link('Чат поддержки в WhatsApp', url=cnfg.support_whatsapp_link)
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text=text,
+                                parse_mode="Markdown",
+                                disable_web_page_preview=True,
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_questions_kb)
 
@@ -788,9 +793,13 @@ async def register_in_website(c: types.CallbackQuery):
 async def more_bonus(c: types.CallbackQuery):
     text = "Наш проект всегда готов давать нашим посетителей самое лучшее." \
            " Следите за нашими рассылками, в них регулярно приходит что-то интересное. " \
-           "Дополнительные акции Вы всегда можете найти в соц.сетях нашего проекта."
+           "Дополнительные акции Вы всегда можете найти в " \
+           + link('социальных сетях', url=cnfg.taplink) + \
+           " нашего проекта."
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text=text,
+                                parse_mode="Markdown",
+                                disable_web_page_preview=True,
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_questions_kb)
 
@@ -873,7 +882,7 @@ async def support(c: types.CallbackQuery):
     await bot.edit_message_text(chat_id=c.from_user.id,
                                 text='Нажмите на ссылку ниже, чтобы перейти к общению с оператором:\n' +
                                      link('Поддержка Ludobzor',
-                                          url=cnfg.support_link),
+                                          url=cnfg.support_tg_link),
                                 parse_mode="Markdown",
                                 message_id=c.message.message_id,
                                 reply_markup=kb.back_to_menu_kb)

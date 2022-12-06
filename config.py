@@ -7,4 +7,6 @@ password = 'hxxxycxrllrmtvgr'
 text = ""
 
 #support
-support_link = 'https://t.me/ludobzor_support_bot'
+support_tg_link = 'https://t.me/ludobzor_support_bot'
+support_whatsapp_link = 'https://wa.me/message/CZBS7DDSLC74J1'
+taplink = 'https://taplink.cc/ludobzor'
